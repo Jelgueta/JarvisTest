@@ -1,0 +1,6 @@
+projectKey=jarvis-app-stage
+serverUrl=http://lms-sonarqube.southcentralus.cloudapp.azure.com
+serverVersion=6.7.1.35068
+dashboardUrl=http://lms-sonarqube.southcentralus.cloudapp.azure.com/dashboard/index/jarvis-app-stage
+ceTaskId=AWLzeIAhHZvxqxvoMhYY
+ceTaskUrl=http://lms-sonarqube.southcentralus.cloudapp.azure.com/api/ce/task?id=AWLzeIAhHZvxqxvoMhYY

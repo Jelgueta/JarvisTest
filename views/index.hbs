@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <title></title>
+  <link rel="stylesheet" href="/stylesheets/style.css">
+
+</head>
+
+<body>
+  {{!--
+  <div id="google_translate_element" style="display:none"></div> --}}
+
+
+  <label id="paginationLabel"></label>
+
+  <img src="/png/to-the-right.png" id="img-row-right" onclick="next();" style="display:none">
+  <img src="/png/to-the-left.png" id="img-row-left" onclick="back();" style="display:none">
+
+  <div class="timelineDiv" style="display:none">
+    <div class="timeline-wrapper clearfix">
+      <div class="timeline-content-day">
+        <div class="timeline-line"></div>
+
+      </div>
+    </div>
+    <div class="imgDisplay">
+
+    </div>
+  </div>
+
+  <div class="loaderDiv">
+    <div class="loader"></div>
+  </div>
+
+  <div style="display:none">
+
+    <div id="timelineTemplate" class="timeline-content-item" data-timeline="hour-1">
+      <span></span>
+      <div class="timeline-content-item-reveal">
+        <p>
+          <!-- <img src="
+            ://lorempixel.com/300/300/abstract"> -->
+          <div class="dotDescription"></div>
+        </p>
+      </div>
+    </div>
+
+    <div id="imgGridTemplate" class="imgGrid" style="display: none">
+      <div class="imgContainer">
+        <img height="550px" width="450px" class="" src="">
+      </div>
+      <div class="imgDescription">
+
+        <div class="informationDiv">
+          <hr>
+          <h1>Información</h1>
+          <hr>
+
+          <ol class="infoList">
+
+          </ol>
+        </div>
+        <br>
+
+        <div class="warningsDiv">
+          <hr>
+          <h1>Advertencias</h1>
+          <hr>
+          <ol class="warningsList">
+          </ol>
+        </div>
+
+        <br> {{!--
+        <div class="commentsDiv">
+          <hr>
+          <h1>Comentarios</h1>
+          <hr>
+          <ol class="commentsList">
+          </ol>
+        </div> --}}
+
+
+      </div>
+    </div>
+
+  </div>
+
+</body>
+
+<script type="text/javascript">
+
+  let pagination;
+  var proctoring;
+  var currentPage;
+  var totalPages;
+
+  var detailedReportURL = "https://jarvis-app-stage.azurewebsites.net/detailedReport/{{ courseId }}/{{ assessmentId }}/{{ userId }}?page={{page}}";
+  //callFetch(detailedReportURL);
+
+  fetch(detailedReportURL)
+    .then(res => res.json())
+    .then(json => {
+      //console.log(blob)
+
+      proctoring = json;
+      proctoring.forEach((pictures, index) => {
+        if (pictures.pagination) {
+
+          //storing pagination
+          pagination = pictures.pagination;
+
+
+          proctoring.splice(index, 1);
+          currentPage = pagination.currentPage;
+          totalPages = pagination.pages;
+
+        }
+      })
+
+      console.log("pagination", pagination)
+      console.log("proctoring", proctoring)
+      console.log("en fetch ", detailedReportURL)
+      document.getElementById("paginationLabel").innerHTML = "Imágenes Capturadas: " + proctoring.length + " / " + "Página " + currentPage + " de " + totalPages;
+      document.getElementsByClassName("loaderDiv")[0].setAttribute("style", "display:none");
+      document.getElementsByClassName("timelineDiv")[0].setAttribute("style", "display:block");
+      document.getElementById("img-row-right").style.display = "block";
+      document.getElementById("img-row-left").style.display = "block";
+      init();
+    })
+    .catch(err => console.log(err))
+
+  function next() {
+    if (currentPage == totalPages || totalPages == 0) {
+      document.getElementById("img-row-right").style.cursor = "not-allowed";
+    } else {
+      currentPage++;
+      document.getElementById("paginationLabel").innerHTML = "Página " + currentPage + " de " + totalPages;
+      detailedReportURL = "https://jarvis-app-stage.azurewebsites.net/{{ courseId }}/{{ assessmentId }}/{{ userId }}?page=" + currentPage;
+      window.location.href = detailedReportURL;
+    }
+  }
+
+  function back() {
+    if (currentPage == 1) {
+      document.getElementById("img-row-left").style.cursor = "not-allowed";
+    } else {
+      currentPage--;
+      document.getElementById("paginationLabel").innerHTML = "Página " + currentPage + " de " + totalPages;
+      detailedReportURL = "https://jarvis-app-stage.azurewebsites.net/{{ courseId }}/{{ assessmentId }}/{{ userId }}?page=" + currentPage;;
+      window.location.href = detailedReportURL;
+
+    }
+  }
+
+  function init() {
+
+    var singleProctoring;
+    var imgSpan;
+    var imgDescription;
+    var imgWarnings;
+    var imgAlerts;
+    var imgWarningsList;
+    var imgInfoList;
+    var imgGrid;
+    var imgObject;
+    var successful;
+    var imgNode;
+    var totalWidth = document.getElementsByClassName("timeline-line")[0].offsetWidth;
+    var newWidth = totalWidth / proctoring.length;
+
+
+    if (proctoring.length == 0) {
+      document.getElementsByClassName("imgDisplay")[0].innerHTML = "<p id='message'>No Existen Datos</p>";
+    }
+
+    for (var i = 0; i < proctoring.length; i++) {
+
+      successful = false;
+
+      singleProctoring = proctoring[i];
+
+      imgNode = document.getElementById("timelineTemplate").cloneNode(true);
+      //imgNode.id = "img" + singleProctoring.index;
+      imgNode.id = "img" + i;
+      imgNode.setAttribute("data-timeline", "hour-" + imgNode.id);
+
+      imgSpan = imgNode.getElementsByTagName("span")[0];
+
+      imgSpan.setAttribute("onmouseover", "showImg(\"" + imgNode.id + "\")");
+      imgSpan.innerHTML = singleProctoring.timestamp.split("T")[1].replace("Z", "");
+
+      imgNode.setAttribute("style", "width:" + newWidth + "px !important;display:none; font-size:12px;");
+
+      imgWarnings = singleProctoring.warnings;
+      imgAlerts = singleProctoring.alerts;
+
+
+
+      imgWarnings = (imgWarnings == null ? [] : imgWarnings);
+      imgAlerts = (imgAlerts == null ? [] : imgAlerts);
+
+
+      if (imgWarnings.length > 0) {
+
+        imgSpan.setAttribute("style", "background:red");
+      }
+      else if (imgAlerts.length > 0) {
+
+        imgSpan.setAttribute("style", "background:orange");
+      }
+      else {
+        imgSpan.setAttribute("style", "background:green");
+        //successful = true;
+      }
+
+      /*imgDescription = imgNode.getElementsByClassName("dotDescription")[0];
+      imgDescription.innerHTML = singleProctoring.timestamp;*/
+
+      document.getElementsByClassName("timeline-content-day")[0].appendChild(imgNode);
+
+      $("#" + imgNode.id).show((i + 1) * 200);
+
+      /*<img style="display:none" class="img0" src="https://us-mc-prod-asset.oss-us-west-1.aliyuncs.com/mc-official/images/comparing/left_pic_three.jpg">*/
+
+      imgGrid = document.getElementById("imgGridTemplate").cloneNode(true);
+
+      imgGrid.id = "";
+      imgGrid.className += " " + imgNode.id;
+
+      imgObject = imgGrid.getElementsByTagName("img")[0];
+      imgObject.src = "data:image/png;base64," + singleProctoring.img;
+      imgObject.src = singleProctoring.img;
+
+      imgInfoList = imgGrid.getElementsByClassName("infoList")[0];
+
+      imgInfoList.innerHTML += "<li><span style=\"color:black;font-weight:bold;\">Fecha:&nbsp;</span>" + singleProctoring.timestamp.split("T")[0] + "</li>";
+
+      imgInfoList.innerHTML += "<li><span style=\"color:black;font-weight:bold;\">Hora:&nbsp;</span>" + singleProctoring.timestamp.split("T")[1].replace("Z", "") + "</li>";
+
+      imgInfoList.innerHTML += "<li><span style=\"color:black;font-weight:bold;\">Nivel de confianza:&nbsp;</span>" + toPercentage(singleProctoring.verify.confidence_level) + "%</li>";
+
+      imgWarningsList = imgGrid.getElementsByClassName("warningsList")[0];
+
+      //      imgCommentsList = imgGrid.getElementsByClassName("commentsList")[0];
+
+
+      if (imgWarnings.length == 0 && imgAlerts.length == 0) {
+        imgWarningsList.innerHTML += "<li>" + "No hay Advertencias" + "</li>";
+      }
+      /*
+            if (imgAlerts.length == 0) {
+              imgCommentsList.innerHTML += "<li>" + "No hay comentarios" + "</li>";
+            }
+      */
+      if (!successful) {
+
+        imgWarnings.forEach(function (e) {
+          // imgCommentsList.innerHTML += "<li>" + e + "</li>";
+          imgWarningsList.innerHTML += "<li>" + e + "</li>";
+        });
+
+        imgAlerts.forEach(function (e) {
+          // imgCommentsList.innerHTML += "<li>" + e + "</li>";
+          imgWarningsList.innerHTML += "<li>" + e + "</li>";
+        });
+
+      } else {
+
+        imgGrid.getElementsByClassName("warningsDiv")[0].remove();
+
+      }
+
+      document.getElementsByClassName("imgDisplay")[0].appendChild(imgGrid);
+    }
+
+    //load first image
+    if (proctoring.length > 0) {
+
+      showImg("img0")
+    }
+
+
+    initializeTimeline();
+  }
+
+  function toPercentage(num) {
+
+    return Math.round(num * 100);
+  }
+
+
+  function initializeTimeline() {
+
+    $(".timeline-wrapper .timeline-content-item > span").on("mouseenter mouseleave", function (e) {
+      $(".timeline-wrapper .timeline-content-item.active").removeClass("active");
+      $(this).parent().addClass("active");
+    });
+  }
+
+
+  var lastImgShown = null;
+
+  function showImg(imgName) {
+
+    if (lastImgShown != null) {
+
+      hideImg(lastImgShown);
+    }
+
+    lastImgShown = imgName;
+
+    var img = document.getElementsByClassName(imgName)[0];
+
+    img.className = img.className.indexOf("hideImg") != -1 ? img.className.replace("hideImg", "showImg") : imgName + " showImg";
+  }
+
+  function hideImg(imgName) {
+
+    var img = document.getElementsByClassName(imgName)[0];
+
+    img.className = img.className.indexOf("showImg") != -1 ? img.className.replace("showImg", "hideImg") : imgName + " hideImg";
+  }
+
+  function resetData() {
+
+    Array.prototype.slice.call(document.getElementsByClassName("timeline-content-item")).forEach(function (e) { if (e.id != "timelineTemplate") { e.remove() } })
+
+    document.getElementsByClassName("imgDisplay")[0].innerHTML = "";
+  }
+
+
+
+
+
+//document.getElementsByClassName("timeline-content-day")[0].setAttribute("style","block !important");
+
+</script>
+
+</html>
